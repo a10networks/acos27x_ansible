@@ -1,0 +1,11 @@
+---
+# natpool variables
+username: admin
+state: present
+partition: ""
+natpool_name: natpool04
+start_ip_addr: 172.18.70.249
+end_ip_addr: 172.18.70.249
+netmask: 255.255.255.255
+ha_group_id: 30
+vrid: 1

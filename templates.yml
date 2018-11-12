@@ -1,0 +1,10 @@
+---
+- hosts: a10devices
+  user: admin
+  connection: local
+  gather_facts: no
+  vars_prompt:
+    - name: password
+      prompt: "Enter password"
+  roles:
+    - a10templates

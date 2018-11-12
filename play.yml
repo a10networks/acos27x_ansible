@@ -1,0 +1,5 @@
+---
+- import_playbook: rserver.yml
+- import_playbook: servicegroup.yml
+- import_playbook: vserver.yml
+- import_playbook: hmonitor.yml

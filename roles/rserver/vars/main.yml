@@ -1,0 +1,13 @@
+---
+
+# Real server variables
+username: admin
+state: present
+server_status: enabled
+partition: ""
+rserver_name: webserver4
+rserver_ip: 172.18.70.101
+rserver_port: 80
+rserver_protocol: tcp
+rserver_hm: hm_http
+slow_start: "1"

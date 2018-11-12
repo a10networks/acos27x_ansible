@@ -1,0 +1,105 @@
+---
+
+- debug:
+    msg: "{{inventory_hostname}}"
+
+- name: Create a Cookie Persistence Template
+  tags: cookie-persistence
+  a10_cookie_persistence_template_v2:
+    host: "{{inventory_hostname}}"
+    username: "{{username}}"
+    password: "{{password}}"
+    validate_certs: no
+    partition: "{{partition}}"
+    state: "{{state}}"
+    name: "{{cookie_template_name}}"
+    cookie_name: "{{cookie_name}}"
+    match_type: "{{cookie_templ_match_type}}"
+    expire_exist: "{{cookie_templ_expire_exist}}"
+    expire: "{{cookie_templ_expire}}"
+
+- name: Create an HTTP Template
+  tags: http
+  a10_http_template_v2:
+    host: "{{inventory_hostname}}"
+    username: "{{username}}"
+    password: "{{password}}"
+    validate_certs: no
+    partition: "{{partition}}"
+    state: "{{state}}"
+    name: "{{http_template_name}}"
+    compression: "{{http_templ_compression}}"
+    url_switching_list:
+      - url: "{{http_templ_url}}"
+        service_group: "{{http_templ_service_group}}"
+        match_method: "{{http_templ_match_method}}"
+
+- name: Create a TCP Proxy Template
+  tags: tcp-proxy
+  a10_tcp_proxy_template_v2:
+    host: "{{inventory_hostname}}"
+    username: "{{username}}"
+    password: "{{password}}"
+    validate_certs: no
+    partition: "{{partition}}"
+    state: "{{state}}"
+    name: "{{tcp_proxy_template_name}}"
+    reno: "{{tcp_proxy_templ_reno}}"
+    idle_timeout: "{{tcp_proxy_templ_idle_timeout}}"
+    reset_fwd: "{{tcp_proxy_templ_reset_fwd}}"
+    reset_rev: "{{tcp_proxy_templ_reset_rev}}"
+
+- name: Create a TCP Template
+  tags: tcp
+  a10_tcp_template_v2:
+    host: "{{inventory_hostname}}"
+    username: "{{username}}"
+    password: "{{password}}"
+    validate_certs: no
+    partition: "{{partition}}"
+    state: "{{state}}"
+    name: "{{tcp_template_name}}"
+    idle_timeout: "{{tcp_idle_timeout}}"
+    init_win_size: "{{tcp_init_win_size}}"
+
+- name: Create a UDP Template
+  tags: udp
+  a10_udp_template_v2:
+    host: "{{inventory_hostname}}"
+    username: "{{username}}"
+    password: "{{password}}"
+    validate_certs: no
+    partition: "{{partition}}"
+    state: "{{state}}"
+    name: "{{udp_template_name}}"
+    idle_timeout: "{{udp_idle_timeout}}"
+    aging_type: "{{udp_aging_type}}"
+    reselect: "{{udp_reselect}}"
+
+- name: Create source IP persistence template
+  tags: src-ip-persist
+  a10_src_ip_persistence_template_v2:
+    host: "{{inventory_hostname}}"
+    username: "{{username}}"
+    password: "{{password}}"
+    validate_certs: no
+    partition: "{{partition}}"
+    name: "{{src_ip_persist_name}}"
+    match_type: "{{src_ip_persist_match_type}}"
+    timeout: "{{src_ip_persist_timeout}}"
+
+- name: Create a Client SSL Template
+  tags: ssl-client
+  a10_client_ssl_template_v2:
+    validate_certs: no
+    state: "{{state}}"
+    host: "{{inventory_hostname}}"
+    username: "{{username}}"
+    password: "{{password}}"
+    partition: "{{partition}}"
+    name: "{{ssl_client_template_name}}"
+    cert_name: "{{cert_name}}"
+    key_name: "{{key_name}}"
+    chain_cert_name: "{{ssl_client_chain_cert_name}}"
+    pass_phrase: "{{ssl_client_phass_phrase}}"
+    #cipher_list: "{{cipher_list}}"

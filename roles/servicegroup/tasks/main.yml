@@ -1,0 +1,20 @@
+---
+
+- debug:
+    msg: "{{inventory_hostname}}"
+- name: Create a service group
+  a10_service_group_v2:
+    validate_certs: no
+    host: "{{inventory_hostname}}"
+    username: "{{username}}"
+    password: "{{password}}"
+    state: "{{state}}"
+    partition: "{{partition}}"
+    service_group: "{{servicegroup_name}}"
+    method: "{{method}}"
+    health_monitor: "{{health_monitor}}"
+    servers:
+       - server: "{{real_server_name}}"
+         port: "{{real_server_port}}"
+#       - server: "{{real_server_name2}}"
+#         port: "{{real_server_port2}}"

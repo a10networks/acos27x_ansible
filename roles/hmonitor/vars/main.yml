@@ -1,0 +1,12 @@
+---
+# virtual server variables
+username: admin
+state: present
+partition: ""
+hm_name: hm_http # hm_icmp, hm_tcp, ws_hm_http, ws_hm_https
+port: 80
+interval: 4
+timeout: 4
+retry: 5
+disable_after_down: 0
+consec_pass_reqd: 1

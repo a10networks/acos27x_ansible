@@ -1,0 +1,17 @@
+---
+- name: Create health monitor
+  a10_health_monitor_v2:
+    validate_certs: no
+    state: "{{state}}"
+    host: "{{inventory_hostname}}"
+    username: "{{username}}"
+    password: "{{password}}"
+    partition: "{{partition}}"
+    hm_name: "{{hm_name}}"
+    interval: "{{interval}}"
+    timeout: "{{timeout}}"
+    retry: "{{retry}}"
+    disable_after_down: "{{disable_after_down}}"
+    consec_pass_reqd: "{{consec_pass_reqd}}"
+    tcp:
+      port: "{{port}}"

@@ -1,0 +1,29 @@
+---
+- debug:
+    msg: "{{inventory_hostname}}"
+- name: Create a virtual server
+  a10_virtual_server_v2:
+    validate_certs: no
+    host: "{{inventory_hostname}}"
+    username: "{{username}}"
+    password: "{{password}}"
+    state: "{{state}}"
+    partition: "{{partition}}"
+    virtual_server: "{{virtual_server_name}}"
+    virtual_server_ip: "{{virtual_server_ip}}"
+    redistribution_flagged: "{{redistribution_flagged}}"
+    disable_vserver_on_condition: "{{disable_vserver_on_condition}}"
+    status: "{{status}}"
+    virtual_server_ports:
+      - port: "{{virtual_server_port}}"
+        protocol: "{{virtual_server_protocol}}"
+        service_group: "{{service_group_name}}"
+        source_nat: "{{source_nat}}"
+        ha_connection_mirror: "{{ha_connection_mirror}}"
+        tcp_template: "{{tcp_template}}"
+        source_ip_persistence_template: "{{source_ip_persistence_template}}"
+      # - port : 443
+      #   protocol: HTTPS
+      #   service_group: CSPOOL3
+      #   source_nat: natpool04
+      #   client_ssl_template: "{{client_ssl_template}}"

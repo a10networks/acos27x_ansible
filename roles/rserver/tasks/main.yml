@@ -1,0 +1,21 @@
+---
+- debug:
+    msg: "{{inventory_hostname}}"
+
+- name: Create a realserver
+  a10_server_v2:
+    host: "{{inventory_hostname}}"
+    username: "{{username}}"
+    password: "{{password}}"
+    state: "{{state}}"
+    validate_certs: no
+    partition: "{{partition}}"
+    server_name: "{{rserver_name}}"
+    server_ip: "{{rserver_ip}}"
+    server_status: "{{server_status}}"
+    health_monitor: "{{rserver_hm}}"
+    slow_start: "{{slow_start}}"
+    server_ports:
+        - port_num: "{{rserver_port}}"
+          protocol: "{{rserver_protocol}}"
+          health_monitor: "{{rserver_hm}}"

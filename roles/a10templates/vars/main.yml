@@ -1,0 +1,51 @@
+---
+
+username: admin
+state: present
+partition: ""
+
+# cookie persistence template variables
+cookie_template_name: my_src_ip_pers_templ
+cookie_name: testcookie
+cookie_templ_match_type: 1
+cookie_templ_expire_exist: 1
+cookie_templ_expire: 120
+
+# http template variables
+http_template_name: http_templ
+http_templ_compression: {}
+http_templ_url: french
+http_templ_service_group: CSPOOL2
+http_templ_match_method: 0
+
+# tcp proxy template variables
+tcp_proxy_template_name: tcp_proxy_templ
+tcp_proxy_templ_reno: 0
+tcp_proxy_templ_idle_timeout: 1100
+tcp_proxy_templ_reset_fwd: 1
+tcp_proxy_templ_reset_rev: 1
+
+# tcp template variables
+tcp_template_name: session-aging-5min
+tcp_idle_timeout: 302
+tcp_init_win_size:
+
+# udp template variables
+udp_template_name: udp_template_1
+udp_idle_timeout: 1000
+udp_aging_type: 2
+udp_reselect: False
+
+# src ip persistence variables
+src_ip_persist_name: my_src_ip_pers_templ
+src_ip_persist_match_type: 1
+src_ip_persist_timeout: 22
+
+
+# ssl client template variables
+ssl_client_template_name: my_client_ssl_templ_v4
+cert_name: cert2
+key_name: cert2
+cipher_list: [6, 7, 8, 9, 10]
+ssl_client_chain_cert_name: cert2
+ssl_client_phass_phrase: abcdef
