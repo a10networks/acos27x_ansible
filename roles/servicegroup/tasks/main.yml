@@ -3,7 +3,7 @@
 - debug:
     msg: "{{inventory_hostname}}"
 - name: Create a service group
-  a10_service_group_v2:
+  a10_service_group_v20:
     validate_certs: no
     host: "{{inventory_hostname}}"
     username: "{{username}}"
@@ -16,5 +16,6 @@
     servers:
        - server: "{{real_server_name}}"
          port: "{{real_server_port}}"
-#       - server: "{{real_server_name2}}"
-#         port: "{{real_server_port2}}"
+         priority: "{{real_server_priority}}"
+         status: "{{real_server_status}}"
+         state: "{{real_server_state}}"

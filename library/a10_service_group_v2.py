@@ -23,12 +23,12 @@ along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 DOCUMENTATION = '''
 ---
-module: a10_service_group
+module: a10_service_group_v2
 version_added: 1.8
 short_description: Manage A10 Networks devices' service groups
 description:
     - Manage slb service-group objects on A10 Networks devices via aXAPI
-author: "Mischa Peters (@mischapeters)"
+author: "Mischa Peters (@mischapeters) modified by Debabata Das"
 notes:
     - Requires A10 Networks aXAPI 2.1
     - When a server doesn't exist and is added to the service-group the server will be created
@@ -142,11 +142,11 @@ EXAMPLES = '''
       - server: foo4.mydomain.com
         port: 8080
         status: disabled
-
+        state: present
 '''
 
 VALID_SERVICE_GROUP_FIELDS = ['name', 'protocol', 'lb_method', 'health_monitor', 'client_reset']
-VALID_SERVER_FIELDS = ['server', 'port', 'status']
+VALID_SERVER_FIELDS = ['server', 'port', 'status', 'template', 'priority', 'state']
 
 def validate_servers(module, servers):
     for item in servers:
@@ -172,6 +172,16 @@ def validate_servers(module, servers):
             item['status'] = axapi_enabled_disabled(item['status'])
         else:
             item['status'] = 1
+
+        if 'priority' in item:
+            if not 1 <= item['priority'] <= 16:
+                module.fail_json(msg="member priority should be between 1 to 16")
+
+        if 'state' in item:
+            if item['state'] not in ('present', 'absent'):
+                module.fail_json(msg="Allowed values for port state are present and absent)")
+        else:
+            item['state'] = 'present'
 
 
 def main():
@@ -223,8 +233,6 @@ def main():
     if slb_service_group is None:
         module.fail_json(msg='service_group is required')
 
-
-    axapi_base_url = 'https://' + host + '/services/rest/V2.1/?format=json'
     load_balancing_methods = {'round-robin': 0,
                               'weighted-rr': 1,
                               'least-connection': 2,
@@ -242,6 +250,30 @@ def main():
     else:
         protocol = 3
 
+    # validate the server data list structure
+    validate_servers(module, slb_servers)
+
+    # first we authenticate to get a session id
+    axapi_base_url = 'https://' + host + '/services/rest/V2.1/?format=json'
+    session_url = axapi_authenticate(module, axapi_base_url, username, password)
+
+    # change partitions if we need to
+    if part:
+        result = axapi_call(module, session_url + '&method=system.partition.active', json.dumps({'name': part}))
+        if (result['response']['status'] == 'fail'):
+            module.fail_json(msg=result['response']['err']['msg'])
+
+    # validate that if the health monitor has been passed in, it exists on the system already
+    if slb_health_monitor:
+        get_hm_json_post = {"name": slb_health_monitor}
+        result = axapi_call(module, session_url + '&method=slb.hm.search', json.dumps(get_hm_json_post))
+        if ('response' in result and result['response']['status'] == 'fail'):
+            module.fail_json(msg=result['response']['err']['msg'])
+
+    # then we check to see if the specified group exists
+    slb_result = axapi_call(module, session_url + '&method=slb.service_group.search', json.dumps({'name': slb_service_group}))
+    slb_service_group_exist = not axapi_failure(slb_result)
+
     json_post = {
         'service_group': {
             'name': slb_service_group,
@@ -258,42 +290,20 @@ def main():
     if slb_health_monitor:
         json_post['service_group']['health_monitor'] = slb_health_monitor
 
-    # validate the server data list structure
-    validate_servers(module, slb_servers)
-
-    # first we authenticate to get a session id
-    session_url = axapi_authenticate(module, axapi_base_url, username, password)
-
-    # change partitions if we need to
-    if part:
-        result = axapi_call(module, session_url + '&method=system.partition.active', json.dumps({'name': part}))
-        if (result['response']['status'] == 'fail'):
-            module.fail_json(msg=result['response']['err']['msg'])
-
-    # validate that if the health monitor has been passed in, it exists on the system already
-    if slb_health_monitor:
-        get_hm_json_post = {"name": slb_health_monitor}
-        result = axapi_call(module, session_url + '&method=slb.hm.search', json.dumps(get_hm_json_post))
-        if ('response' in result and result['response']['status'] == 'fail'):
-            module.fail_json(msg=result['response']['err']['msg'])
-
-
-    # then we check to see if the specified group exists
-    slb_result = axapi_call(module, session_url + '&method=slb.service_group.search', json.dumps({'name': slb_service_group}))
-    slb_service_group_exist = not axapi_failure(slb_result)
+    if slb_servers:
+        json_post['service_group']['member_list'] = slb_servers
 
     changed = False
     if state == 'present':
         # before creating/updating we need to validate that servers
         # defined in the servers list exist to prevent errors
-        checked_servers = []
         for server in slb_servers:
             result = axapi_call(module, session_url + '&method=slb.server.search', json.dumps({'name': server['server']}))
             if axapi_failure(result):
                 module.fail_json(msg="the server %s specified in the servers list does not exist" % server['server'])
-            checked_servers.append(server['server'])
 
         if not slb_service_group_exist:
+            axapi_call(module, session_url + '&method=slb.service_group.create', json.dumps(json_post))
             result = axapi_call(module, session_url + '&method=slb.service_group.create', json.dumps(json_post))
             if axapi_failure(result):
                 module.fail_json(msg=result['response']['err']['msg'])
@@ -311,64 +321,46 @@ def main():
                     break
 
             if do_update:
+                # Remove member list and update only service group level attributes
+                json_post['service_group'].pop('member_list')
                 result = axapi_call(module, session_url + '&method=slb.service_group.update', json.dumps(json_post))
                 if axapi_failure(result):
                     module.fail_json(msg=result['response']['err']['msg'])
                 changed = True
 
-        # next we pull the defined list of servers out of the returned
-        # results to make it a bit easier to iterate over
-        defined_servers = slb_result.get('service_group', {}).get('member_list', [])
-
-        # next we add/update new member servers from the user-specified
-        # list if they're different or not on the target device
-        for server in slb_servers:
-            found = False
-            different = False
-            for def_server in defined_servers:
-                if server['server'] == def_server['server']:
-                    found = True
-                    for valid_field in VALID_SERVER_FIELDS:
-                        if server[valid_field] != def_server[valid_field]:
-                            different = True
-                            break
-                    if found or different:
-                        break
-            # add or update as required
-            server_data = {
+            sgroup_member_json = {
                 "name": slb_service_group,
-                "member": server,
             }
-            if not found:
-                result = axapi_call(module, session_url + '&method=slb.service_group.member.create', json.dumps(server_data))
-                changed = True
-            elif different:
-                result = axapi_call(module, session_url + '&method=slb.service_group.member.update', json.dumps(server_data))
-                changed = True
 
-        # finally, remove any servers that are on the target
-        # device but were not specified in the list given
-        for server in defined_servers:
-            found = False
-            for slb_server in slb_servers:
-                if server['server'] == slb_server['server']:
-                    found = True
-                    break
-            # remove if not found
-            server_data = {
-                "name": slb_service_group,
-                "member": server,
-            }
-            if not found:
-                result = axapi_call(module, session_url + '&method=slb.service_group.member.delete', json.dumps(server_data))
-                changed = True
+            # next we pull the defined list of servers out of the returned
+            # results to make it a bit easier to iterate over
+            defined_servers = slb_result.get('service_group', {}).get('member_list', [])
 
-        # if we changed things, get the full info regarding
-        # the service group for the return data below
-        if changed:
-            result = axapi_call(module, session_url + '&method=slb.service_group.search', json.dumps({'name': slb_service_group}))
-        else:
-            result = slb_result
+            # next we add/update new member servers from the user-specified
+            # list if they're different or not on the target device
+            def server_exists(server):
+                ''' Check if member already port_exists
+                '''
+                for defined_server in defined_servers:
+                    if defined_server['server'] == server['server'] and defined_server['port'] == server['port']:
+                        return True
+                return False
+
+            for server in slb_servers:
+                sgroup_member_json["member"] = server
+                if server['state'] == 'present':
+                    if server_exists(server):
+                        result = axapi_call(module, session_url + '&method=slb.service_group.member.update', json.dumps(sgroup_member_json))
+                        changed = True
+                    else:
+                        axapi_call(module, 'http://localhost', json.dumps(sgroup_member_json))
+                        result = axapi_call(module, session_url + '&method=slb.service_group.member.create', json.dumps(sgroup_member_json))
+                        changed = True
+                else:
+                    result = axapi_call(module, session_url + '&method=slb.service_group.member.delete', json.dumps(sgroup_member_json))
+                    changed = True
+
+
     elif state == 'absent':
         if slb_service_group_exist:
             result = axapi_call(module, session_url + '&method=slb.service_group.delete', json.dumps({'name': slb_service_group}))

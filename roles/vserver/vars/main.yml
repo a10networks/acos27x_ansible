@@ -4,15 +4,18 @@ username: admin
 state: present
 partition: ""
 status: enabled
-virtual_server_name: vserver_1
-virtual_server_ip: 172.18.70.241
-virtual_server_port: 80
-virtual_server_protocol: TCP
-service_group_name: CSPOOL
+virtual_server_name: vserver_7
+virtual_server_ip: 172.18.70.237
 redistribution_flagged: True
 disable_vserver_on_condition: 2
-ha_connection_mirror: 0
+
+# virtual server port variables
+virtual_server_port: 80
+virtual_server_protocol: TCP
+service_group_name: CSPOOL2
 source_nat: natpool03
+ha_connection_mirror: 0
 tcp_template: session-aging-5min
 source_ip_persistence_template: my_src_ip_pers_templ
 client_ssl_template: my_client_ssl_templ_v4
+vserver_port_state: present

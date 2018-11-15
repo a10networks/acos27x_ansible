@@ -3,7 +3,7 @@
     msg: "{{inventory_hostname}}"
 
 - name: Create a realserver
-  a10_server_v2:
+  a10_server_v20:
     host: "{{inventory_hostname}}"
     username: "{{username}}"
     password: "{{password}}"
@@ -17,5 +17,7 @@
     slow_start: "{{slow_start}}"
     server_ports:
         - port_num: "{{rserver_port}}"
-          protocol: "{{rserver_protocol}}"
-          health_monitor: "{{rserver_hm}}"
+          protocol: "{{rserver_port_protocol}}"
+          health_monitor: "{{rserver_port_hm}}"
+          status: "{{rserver_port_status}}"
+          state: "{{rserver_port_state}}"

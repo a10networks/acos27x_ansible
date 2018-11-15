@@ -6,7 +6,10 @@ partition: ""
 servicegroup_name: CSPOOL3
 method: weighted-least-connection
 health_monitor: hm_http
-real_server_name: webserver
+
+# service group member variables
+real_server_name: webserver3
 real_server_port: 80
-real_server_name2: webserver2
-real_server_port2: 80
+real_server_priority: 2
+real_server_status: disabled
+real_server_state: present

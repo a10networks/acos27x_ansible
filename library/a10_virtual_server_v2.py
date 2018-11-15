@@ -28,7 +28,7 @@ version_added: 1.8
 short_description: Manage A10 Networks devices' virtual servers
 description:
     - Manage slb virtual server objects on A10 Networks devices via aXAPI
-author: "Fadi Hafez (@a10-fhafez)"
+author: "Debabrata Das"
 notes:
     - Requires A10 Networks aXAPI 2.1
 requirements: []
@@ -151,6 +151,7 @@ EXAMPLES = '''
       - port: 8080
         protocol: http
         status: disabled
+        state: present
 
 # Create a new wild card virtual server
 - a10_virtual_server:
@@ -184,7 +185,7 @@ EXAMPLES = '''
 
 '''
 
-VALID_PORT_FIELDS = ['port', 'protocol', 'service_group', 'status','tcp_template','tcp_proxy_template','ssl_session_id_persistence_template','ha_connection_mirror','extended_stats','source_nat','cookie_persistence_template','aflex_list','http_template','client_ssl_template','server_ssl_template','acl_natpool_binding_list','source_ip_persistence_template','send_reset','name','direct_server_return','default_selection']
+VALID_PORT_FIELDS = ['port', 'protocol', 'service_group', 'status','tcp_template','tcp_proxy_template','ssl_session_id_persistence_template','ha_connection_mirror','extended_stats','source_nat','cookie_persistence_template','aflex_list','http_template','client_ssl_template','server_ssl_template','acl_natpool_binding_list','source_ip_persistence_template','send_reset','name','direct_server_return','default_selection', 'state']
 
 def validate_ports(module, ports):
     for item in ports:
@@ -223,6 +224,12 @@ def validate_ports(module, ports):
         # ensure the service_group field is at least present
         if 'service_group' not in item:
             item['service_group'] = ''
+
+        if 'state' in item:
+            if item['state'] not in ('present', 'absent'):
+                module.fail_json(msg="Allowed values for port state are present and absent)")
+        else:
+            item['state'] = 'present'
 
 def main():
     argument_spec = a10_argument_spec()
@@ -271,17 +278,17 @@ def main():
     axapi_base_url = 'https://%s/services/rest/V2/?format=json' % host
     session_url = axapi_authenticate(module, axapi_base_url, username, password)
 
-    if part:
-        result = axapi_call(module, session_url + '&method=system.partition.active',
-                                            json.dumps({'name': part}))
-        if (result['response']['status'] == 'fail'):
-            module.fail_json(msg=result['response']['err']['msg'])
-
     slb_virtual_data = axapi_call(module, session_url + '&method=slb.virtual_server.search', json.dumps({'name': slb_virtual}))
     slb_virtual_exists = not axapi_failure(slb_virtual_data)
 
+    if part:
+        result = axapi_call(module, session_url + '&method=system.partition.active',json.dumps({'name': part}))
+        if (result['response']['status'] == 'fail'):
+            module.fail_json(msg=result['response']['err']['msg'])
+
     changed = False
     if state == 'present':
+
         json_post = {
             'virtual_server': {
                 'name': slb_virtual,
@@ -295,7 +302,6 @@ def main():
             json_post['redistribution_flagged'] = 1
         else:
             json_post['redistribution_flagged'] = 0
-
 
         # if disable on condition passed in
         if disable_vserver_on_condition:
@@ -326,48 +332,49 @@ def main():
                 checked_service_groups.append(port['service_group'])
 
         if not slb_virtual_exists:
+            if not slb_server_ip:
+                module.fail_json(msg='you must specify an IP address when creating a server')
             result = axapi_call(module, session_url + '&method=slb.virtual_server.create', json.dumps(json_post))
             if axapi_failure(result):
                 module.fail_json(msg="failed to create the virtual server: %s" % result['response']['err']['msg'])
             changed = True
         else:
-            def needs_update(src_ports, dst_ports):
-                '''
-                Checks to determine if the port definitions of the src_ports
-                array are in or different from those in dst_ports. If there is
-                a difference, this function returns true, otherwise false.
-                '''
-                for src_port in src_ports:
-                    found = False
-                    different = False
-                    for dst_port in dst_ports:
-                        if src_port['port'] == dst_port['port']:
-                            found = True
-                            for valid_field in VALID_PORT_FIELDS:
-                                if valid_field in src_port and valid_field in dst_port:
-                                    if src_port[valid_field] != dst_port[valid_field]:
-                                        different = True
-                                        break
-                                else:
-                                  different = True
-                                  break
-                            if found or different:
-                                break
-                    if not found or different:
-                        return True
-                # every port from the src exists in the dst, and none of them were different
-                return False
+
+            # Remove port list and update only server level attributes
+            json_post['virtual_server'].pop('vport_list')
+            result = axapi_call(module, session_url + '&method=slb.virtual_server.update', json.dumps(json_post))
+
+            # Create server port level json object
+            vserver_port_json = {
+                'name': slb_virtual
+            }
 
             defined_ports = slb_virtual_data.get('virtual_server', {}).get('vport_list', [])
 
-            # we check for a needed update both ways, in case ports
-            # are missing from either the ones specified by the user
-            # or from those on the device
-            if needs_update(defined_ports, slb_virtual_ports) or needs_update(slb_virtual_ports, defined_ports):
-                result = axapi_call(module, session_url + '&method=slb.virtual_server.update', json.dumps(json_post))
-                if axapi_failure(result):
-                    module.fail_json(msg="failed to create the virtual server: %s" % result['response']['err']['msg'])
-                changed = True
+            def port_exists(srv_port):
+                ''' Checks to determine if the port already exists in the server conf
+                '''
+                for defined_port in defined_ports:
+                    if defined_port['port'] == srv_port['port']:
+                        return True
+                return False
+
+            for vport in slb_virtual_ports:
+                vserver_port_json["vport"] = vport
+                if port['state'] == 'present':
+                    if port_exists(vport):
+                        result = axapi_call(module, session_url + '&method=slb.virtual_server.vport.update', json.dumps(vserver_port_json))
+                        if axapi_failure(result):
+                            module.fail_json(msg="failed to create the virtual server port: %s" % result['response']['err']['msg'])
+                        changed = True
+                    else:
+                        result = axapi_call(module, session_url + '&method=slb.virtual_server.vport.create', json.dumps(vserver_port_json))
+                        if axapi_failure(result):
+                            module.fail_json(msg="failed to update the virtual server port: %s" % result['response']['err']['msg'])
+                        changed = True
+                else:
+                    result = axapi_call(module, session_url + '&method=slb.virtual_server.vport.delete', json.dumps(vserver_port_json))
+                    changed = True
 
         # if we changed things, get the full info regarding
         # the service group for the return data below

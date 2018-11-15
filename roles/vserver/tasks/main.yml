@@ -2,7 +2,7 @@
 - debug:
     msg: "{{inventory_hostname}}"
 - name: Create a virtual server
-  a10_virtual_server_v2:
+  a10_virtual_server_v20:
     validate_certs: no
     host: "{{inventory_hostname}}"
     username: "{{username}}"
@@ -22,8 +22,4 @@
         ha_connection_mirror: "{{ha_connection_mirror}}"
         tcp_template: "{{tcp_template}}"
         source_ip_persistence_template: "{{source_ip_persistence_template}}"
-      # - port : 443
-      #   protocol: HTTPS
-      #   service_group: CSPOOL3
-      #   source_nat: natpool04
-      #   client_ssl_template: "{{client_ssl_template}}"
+        state: "{{vserver_port_state}}"

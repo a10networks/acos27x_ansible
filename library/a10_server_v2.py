@@ -3,7 +3,7 @@
 
 """
 Ansible module to manage A10 Networks slb server objects
-(c) 2014, Mischa Peters <mpeters@a10networks.com>
+(c) 2014
 
 This file is part of Ansible
 
@@ -23,12 +23,12 @@ along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 DOCUMENTATION = '''
 ---
-module: a10_server
+module: a10_server_v2
 version_added: 1.8
 short_description: Manage A10 Networks AX/SoftAX/Thunder/vThunder devices
 description:
     - Manage slb server objects on A10 Networks devices via aXAPI
-author: Mischa Peters (@mischapeters) with modifications by Fadi Hafez
+author: Mischa Peters (@mischapeters) with modifications by Fadi Hafez and Debabrata Das
 notes:
     - Requires A10 Networks aXAPI 2.1
 options:
@@ -123,13 +123,15 @@ EXAMPLES = '''
       - port_num: 8080
         protocol: tcp
         health_monitor: ws_hm_http
+        state: present
       - port_num: 8443
         protocol: TCP
         health_monitor: ws_hm_https
+        state: present
 
 '''
 
-VALID_PORT_FIELDS = ['port_num', 'protocol', 'status', 'health_monitor']
+VALID_PORT_FIELDS = ['port_num', 'protocol', 'status', 'health_monitor', 'state']
 
 def validate_ports(module, ports, s_url):
     for item in ports:
@@ -174,9 +176,17 @@ def validate_ports(module, ports, s_url):
 
         # convert the status to the internal API integer value
         if 'status' in item:
+            if item['status'] not in ('enabled', 'disabled'):
+                module.fail_json(msg="Allowed values for port state are enabled and disabled)")
             item['status'] = axapi_enabled_disabled(item['status'])
         else:
             item['status'] = 1
+
+        if 'state' in item:
+            if item['state'] not in ('present', 'absent'):
+                module.fail_json(msg="Allowed values for port state are present and absent)")
+        else:
+            item['state'] = 'present'
 
 
 def main():
@@ -219,6 +229,9 @@ def main():
     axapi_base_url = 'https://%s/services/rest/V2.1/?format=json' % host
     session_url = axapi_authenticate(module, axapi_base_url, username, password)
 
+    slb_server_data = axapi_call(module, session_url + '&method=slb.server.search', json.dumps({'name': slb_server}))
+    slb_server_exists = not axapi_failure(slb_server_data)
+
     # change partitions if we need to
     if part:
         result = axapi_call(module, session_url + '&method=system.partition.active', json.dumps({'name': part}))
@@ -250,69 +263,52 @@ def main():
     if slb_server_slow_start:
         json_post['server']['slow_start'] = slb_server_slow_start
 
-    slb_server_data = axapi_call(module, session_url + '&method=slb.server.search', json.dumps({'name': slb_server}))
-    slb_server_exists = not axapi_failure(slb_server_data)
-
     changed = False
     if state == 'present':
         if not slb_server_exists:
             if not slb_server_ip:
                 module.fail_json(msg='you must specify an IP address when creating a server')
-
             result = axapi_call(module, session_url + '&method=slb.server.create', json.dumps(json_post))
             if axapi_failure(result):
                 module.fail_json(msg="failed to create the server: %s" % result['response']['err']['msg'])
             changed = True
         else:
-            def port_needs_update(src_ports, dst_ports):
-                '''
-                Checks to determine if the port definitions of the src_ports
-                array are in or different from those in dst_ports. If there is
-                a difference, this function returns true, otherwise false.
-                '''
-                for src_port in src_ports:
-                    found = False
-                    different = False
-                    for dst_port in dst_ports:
-                        if src_port['port_num'] == dst_port['port_num']:
-                            found = True
-                            for valid_field in VALID_PORT_FIELDS:
-                                if valid_field in src_port and valid_field in dst_port:
-                                    if src_port[valid_field] != dst_port[valid_field]:
-                                        different = True
-                                        break
-                                else:
-                                    different = True
-                                    break
-                            if found or different:
-                                break
-                    if not found or different:
-                        return True
-                # every port from the src exists in the dst, and none of them were different
-                return False
 
-            def status_needs_update(current_status, new_status):
-                '''
-                Check to determine if we want to change the status of a server.
-                If there is a difference between the current status of the server and
-                the desired status, return true, otherwise false.
-                '''
-                if current_status != new_status:
-                    return True
-                return False
+            # Remove port list and update only server level attributes
+            port_list = json_post['server'].pop('port_list')
+            result = axapi_call(module, session_url + '&method=slb.server.update', json.dumps(json_post))
+
+            # Create server port level json object
+            server_port_json = {
+                'name': slb_server
+            }
 
             defined_ports = slb_server_data.get('server', {}).get('port_list', [])
-            current_status = slb_server_data.get('server', {}).get('status')
 
-            # we check for a needed update several ways
-            # - in case ports are missing from the ones specified by the user
-            # - in case ports are missing from those on the device
-            # - in case we are change the status of a server
-            if port_needs_update(defined_ports, slb_server_ports) or port_needs_update(slb_server_ports, defined_ports) or status_needs_update(current_status, axapi_enabled_disabled(slb_server_status)):
-                result = axapi_call(module, session_url + '&method=slb.server.update', json.dumps(json_post))
-                if axapi_failure(result):
-                    module.fail_json(msg="failed to update the server: %s" % result['response']['err']['msg'])
-                changed = True
+            def port_exists(srv_port):
+                ''' Checks to determine if the port already exists in the server conf
+                '''
+                for defined_port in defined_ports:
+                    if defined_port['port_num'] == srv_port['port_num']:
+                        return True
+                return False
+
+            for port in slb_server_ports:
+                server_port_json["port"] = port
+                if port['state'] == 'present':
+                    if port_exists(port):
+                        result = axapi_call(module, session_url + '&method=slb.server.port.update', json.dumps(server_port_json))
+                        if axapi_failure(result):
+                            module.fail_json(msg="failed to create the server port: %s" % result['response']['err']['msg'])
+                        changed = True
+                    else:
+                        result = axapi_call(module, session_url + '&method=slb.server.port.create', json.dumps(server_port_json))
+                        if axapi_failure(result):
+                            module.fail_json(msg="failed to update the server port: %s" % result['response']['err']['msg'])
+                        changed = True
+                else:
+                    result = axapi_call(module, session_url + '&method=slb.server.port.delete', json.dumps(server_port_json))
+                    changed = True
 
         # if we changed things, get the full info regarding
         # the service group for the return data below
