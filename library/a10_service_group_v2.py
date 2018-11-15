@@ -353,7 +353,6 @@ def main():
                         result = axapi_call(module, session_url + '&method=slb.service_group.member.update', json.dumps(sgroup_member_json))
                         changed = True
                     else:
-                        axapi_call(module, 'http://localhost', json.dumps(sgroup_member_json))
                         result = axapi_call(module, session_url + '&method=slb.service_group.member.create', json.dumps(sgroup_member_json))
                         changed = True
                 else:
