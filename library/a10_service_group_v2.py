@@ -303,7 +303,6 @@ def main():
                 module.fail_json(msg="the server %s specified in the servers list does not exist" % server['server'])
 
         if not slb_service_group_exist:
-            axapi_call(module, session_url + '&method=slb.service_group.create', json.dumps(json_post))
             result = axapi_call(module, session_url + '&method=slb.service_group.create', json.dumps(json_post))
             if axapi_failure(result):
                 module.fail_json(msg=result['response']['err']['msg'])

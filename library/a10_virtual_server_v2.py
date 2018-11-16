@@ -332,7 +332,7 @@ def main():
                 checked_service_groups.append(port['service_group'])
 
         if not slb_virtual_exists:
-            if not slb_server_ip:
+            if not slb_virtual_ip:
                 module.fail_json(msg='you must specify an IP address when creating a server')
             result = axapi_call(module, session_url + '&method=slb.virtual_server.create', json.dumps(json_post))
             if axapi_failure(result):

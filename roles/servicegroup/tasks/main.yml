@@ -3,7 +3,7 @@
 - debug:
     msg: "{{inventory_hostname}}"
 - name: Create a service group
-  a10_service_group_v20:
+  a10_service_group_v2:
     validate_certs: no
     host: "{{inventory_hostname}}"
     username: "{{username}}"

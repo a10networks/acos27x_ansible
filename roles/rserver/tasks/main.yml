@@ -3,7 +3,7 @@
     msg: "{{inventory_hostname}}"
 
 - name: Create a realserver
-  a10_server_v20:
+  a10_server_v2:
     host: "{{inventory_hostname}}"
     username: "{{username}}"
     password: "{{password}}"

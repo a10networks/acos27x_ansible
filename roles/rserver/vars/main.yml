@@ -5,9 +5,9 @@ username: admin
 state: present
 server_status: enabled
 partition: ""
-rserver_name: webserver
-rserver_ip: 172.18.70.93
-slow_start: 1
+rserver_name: webserver2
+rserver_ip: 172.18.70.81
+slow_start: 0
 rserver_hm: HTTP
 
 
