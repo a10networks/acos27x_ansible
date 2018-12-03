@@ -4,7 +4,7 @@ username: admin
 state: present
 partition: ""
 servicegroup_name: CSPOOL4
-method: weighted-least-connection
+method: service-least-connection
 health_monitor: hm_http
 
 # service group member variables

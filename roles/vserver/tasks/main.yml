@@ -14,6 +14,11 @@
     redistribution_flagged: "{{redistribution_flagged}}"
     disable_vserver_on_condition: "{{disable_vserver_on_condition}}"
     status: "{{status}}"
+    ha_group:
+      - ha_group_id: "{{ha_group_id}}"
+        dynamic_server_weight: "{{dynamic_server_weight}}"
+        status: "{{ha_group_status}}"
+    vrid: "{{vrid}}"
     virtual_server_ports:
       - port: "{{virtual_server_port}}"
         protocol: "{{virtual_server_protocol}}"

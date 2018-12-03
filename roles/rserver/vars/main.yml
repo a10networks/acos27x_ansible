@@ -5,8 +5,8 @@ username: admin
 state: present
 server_status: enabled
 partition: ""
-rserver_name: webserver2
-rserver_ip: 172.18.70.81
+rserver_name: webserver3
+rserver_ip: 172.18.68.229
 slow_start: 0
 rserver_hm: HTTP
 
@@ -16,4 +16,4 @@ rserver_port: 8080
 rserver_port_status: enabled
 rserver_port_protocol: tcp
 rserver_port_hm: HTTP
-rserver_port_state: present
+rserver_port_state: pesent

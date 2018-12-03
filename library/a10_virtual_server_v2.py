@@ -246,6 +246,8 @@ def main():
             acl_id=dict(type='str', required=False, default=None),
             acl_name=dict(type='str', required=False, default=None),
             virtual_server_ports=dict(type='list', required=True),
+            ha_group=dict(type='list',required=False, default=None),
+            vrid=dict(type='int', required=False, default=None)
         )
     )
 
@@ -268,6 +270,8 @@ def main():
     acl_id = module.params['acl_id']
     acl_name = module.params['acl_name']
     disable_vserver_on_condition = module.params['disable_vserver_on_condition']
+    ha_group = module.params['ha_group']
+    vrid = module.params['vrid']
 
 
     if slb_virtual is None:
@@ -299,22 +303,33 @@ def main():
 
         # if redistribution_flagged was passed in
         if redistribution_flagged == 'True':
-            json_post['redistribution_flagged'] = 1
+            json_post['virtual_server']['redistribution_flagged'] = 1
         else:
-            json_post['redistribution_flagged'] = 0
+            json_post['virtual_server']['redistribution_flagged'] = 0
 
         # if disable on condition passed in
         if disable_vserver_on_condition:
-            json_post['disable_vserver_on_condition'] = disable_vserver_on_condition
+            json_post['virtual_server']['disable_vserver_on_condition'] = disable_vserver_on_condition
 
         # if acl id or acl name was passed in bind it to the vip, otherwise assign the ip address passed in
         if acl_id or acl_name:
             if acl_id:
-                json_post['acl_id'] = acl_id
+                json_post['virtual_server']['acl_id'] = acl_id
             else:
-                json_post['acl_name'] = acl_name
+                json_post['virtual_server']['acl_name'] = acl_name
         else:
-            json_post['address'] = slb_virtual_ip
+            json_post['virtual_server']['address'] = slb_virtual_ip
+
+
+        if ha_group is not None:
+            for item in ha_group:
+                json_post['virtual_server']['ha_group'] = {}
+                json_post['virtual_server']['ha_group']['ha_group_id'] = item['ha_group_id']
+                json_post['virtual_server']['ha_group']['dynamic_server_weight'] = item['dynamic_server_weight']
+                json_post['virtual_server']['ha_group']['status'] = item['status']
+
+        if ha_group is not None:
+            json_post['virtual_server']['vrid'] = vrid
 
         # before creating/updating we need to validate that any
         # service groups defined in the ports list exist since
