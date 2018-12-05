@@ -1,0 +1,8 @@
+---
+# ssl variables
+username: admin
+state: present
+partition: ""
+method: upload
+file_name: /Users/deb/.ssh/cert.pem
+file_type: certificate

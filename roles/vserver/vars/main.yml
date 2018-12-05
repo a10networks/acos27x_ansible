@@ -11,15 +11,15 @@ disable_vserver_on_condition: 2
 ha_group_id: 1
 dynamic_server_weight: 1
 ha_group_status: 1
-vrid: 1
+vrid: 0
 
 # virtual server port variables
-virtual_server_port: 80
+virtual_server_port: 8080
 virtual_server_protocol: TCP
 service_group_name: CSPOOL
-source_nat: natpool08
-ha_connection_mirror: 1
-tcp_template: session-aging-60min
+source_nat: natpool01
+ha_connection_mirror: 0
+tcp_template: session-aging-5min
 source_ip_persistence_template: my_src_ip_pers_templ
 client_ssl_template: my_client_ssl_templ_v4
 virtual_server_port_status: enabled

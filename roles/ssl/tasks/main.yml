@@ -1,0 +1,11 @@
+---
+- name: Upload SSL Key
+  a10_ssl_v2:
+    validate_certs: no
+    host: "{{inventory_hostname}}"
+    username: "{{username}}"
+    password: "{{password}}"
+    state: "{{state}}"
+    method: "{{method}}"
+    file_name: "{{file_name}}"
+    file_type: "{{file_type}}"

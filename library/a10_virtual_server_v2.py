@@ -279,7 +279,7 @@ def main():
 
     validate_ports(module, slb_virtual_ports)
 
-    axapi_base_url = 'https://%s/services/rest/V2/?format=json' % host
+    axapi_base_url = 'https://%s/services/rest/V2.1/?format=json' % host
     session_url = axapi_authenticate(module, axapi_base_url, username, password)
 
     slb_virtual_data = axapi_call(module, session_url + '&method=slb.virtual_server.search', json.dumps({'name': slb_virtual}))
@@ -320,6 +320,8 @@ def main():
         else:
             json_post['virtual_server']['address'] = slb_virtual_ip
 
+        # if ha_group is not None and vrid is not None:
+        #     module.fail_json(msg="Either ha_group or vrid can be set at a time.")
 
         if ha_group is not None:
             for item in ha_group:
@@ -328,7 +330,7 @@ def main():
                 json_post['virtual_server']['ha_group']['dynamic_server_weight'] = item['dynamic_server_weight']
                 json_post['virtual_server']['ha_group']['status'] = item['status']
 
-        if ha_group is not None:
+        if vrid is not None:
             json_post['virtual_server']['vrid'] = vrid
 
         # before creating/updating we need to validate that any
