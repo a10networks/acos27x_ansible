@@ -275,7 +275,11 @@ def main():
         else:
 
             # Remove port list and update only server level attributes
-            port_list = json_post['server'].pop('port_list')
+            try:
+                port_list = json_post['server'].pop('port_list')
+            except KeyError, e:
+                pass
+
             result = axapi_call(module, session_url + '&method=slb.server.update', json.dumps(json_post))
 
             # Create server port level json object

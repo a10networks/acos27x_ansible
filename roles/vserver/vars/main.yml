@@ -3,7 +3,7 @@
 username: admin
 state: present
 partition: ""
-status: enabled
+status: disabled
 virtual_server_name: vserver_8
 virtual_server_ip: 172.18.70.238
 redistribution_flagged: True

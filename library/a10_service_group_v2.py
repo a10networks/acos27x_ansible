@@ -321,7 +321,11 @@ def main():
 
             if do_update:
                 # Remove member list and update only service group level attributes
-                json_post['service_group'].pop('member_list')
+                try:
+                    json_post['service_group'].pop('member_list')
+                except KeyError, e:
+                    pass
+                    
                 result = axapi_call(module, session_url + '&method=slb.service_group.update', json.dumps(json_post))
                 if axapi_failure(result):
                     module.fail_json(msg=result['response']['err']['msg'])

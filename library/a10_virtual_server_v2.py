@@ -245,7 +245,7 @@ def main():
             redistribution_flagged=dict(type='str', choices=['True','False'], required=False, default='False'),
             acl_id=dict(type='str', required=False, default=None),
             acl_name=dict(type='str', required=False, default=None),
-            virtual_server_ports=dict(type='list', required=True),
+            virtual_server_ports=dict(type='list', required=False, default=[]),
             ha_group=dict(type='list',required=False, default=None),
             vrid=dict(type='int', required=False, default=None)
         )
@@ -358,7 +358,12 @@ def main():
         else:
 
             # Remove port list and update only server level attributes
-            json_post['virtual_server'].pop('vport_list')
+            try:
+                json_post['virtual_server'].pop('vport_list')
+            except KeyError, e:
+                pass
+
+            axapi_call(module, 'http://localhost/?' + '&method=slb.virtual_server.update', json.dumps(json_post))
             result = axapi_call(module, session_url + '&method=slb.virtual_server.update', json.dumps(json_post))
 
             # Create server port level json object

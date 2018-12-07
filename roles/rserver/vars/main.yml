@@ -3,12 +3,12 @@
 # Real server variables
 username: admin
 state: present
-server_status: enabled
+server_status: disabled
 partition: ""
-rserver_name: webserver3
-rserver_ip: 172.18.68.229
+rserver_name: webserver5
+rserver_ip: 172.18.68.21
 slow_start: 0
-rserver_hm: HTTP
+rserver_hm: hm_http
 
 
 # Real server port variables
@@ -16,4 +16,4 @@ rserver_port: 8080
 rserver_port_status: enabled
 rserver_port_protocol: tcp
 rserver_port_hm: HTTP
-rserver_port_state: pesent
+rserver_port_state: present
