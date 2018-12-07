@@ -363,7 +363,6 @@ def main():
             except KeyError, e:
                 pass
 
-            axapi_call(module, 'http://localhost/?' + '&method=slb.virtual_server.update', json.dumps(json_post))
             result = axapi_call(module, session_url + '&method=slb.virtual_server.update', json.dumps(json_post))
 
             # Create server port level json object
