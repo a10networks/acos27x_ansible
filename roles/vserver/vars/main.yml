@@ -3,12 +3,12 @@
 username: admin
 state: present
 partition: ""
-status: disabled
+status: enabled
 virtual_server_name: vserver_8
 virtual_server_ip: 172.18.70.238
 redistribution_flagged: True
 disable_vserver_on_condition: 2
-ha_group_id: 1
+ha_group_id: 30
 dynamic_server_weight: 1
 ha_group_status: 1
 vrid: 0

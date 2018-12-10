@@ -222,8 +222,8 @@ def validate_ports(module, ports):
             item['status'] = 1
 
         # ensure the service_group field is at least present
-        if 'service_group' not in item:
-            item['service_group'] = ''
+        # if 'service_group' not in item:
+        #     item['service_group'] = ''
 
         if 'state' in item:
             if item['state'] not in ('present', 'absent'):
@@ -239,7 +239,7 @@ def main():
             state=dict(type='str', default='present', choices=['present', 'absent']),
             partition=dict(type='str', aliases=['partition','part']),
             virtual_server=dict(type='str', aliases=['vip', 'virtual'], required=True),
-            virtual_server_ip=dict(type='str', aliases=['ip', 'address'], required=True),
+            virtual_server_ip=dict(type='str', aliases=['ip', 'address'], required=False),
             virtual_server_status=dict(type='str', default='enabled', aliases=['status'], choices=['enabled', 'disabled']),
             disable_vserver_on_condition=dict(type='str', choices=['0','1','2'], required=False, default='0'),
             redistribution_flagged=dict(type='str', choices=['True','False'], required=False, default='False'),
