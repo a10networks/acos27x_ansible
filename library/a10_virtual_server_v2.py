@@ -317,11 +317,11 @@ def main():
                 json_post['virtual_server']['acl_id'] = acl_id
             else:
                 json_post['virtual_server']['acl_name'] = acl_name
-        else:
-            json_post['virtual_server']['address'] = slb_virtual_ip
+        # else:
+        #     json_post['virtual_server']['address'] = slb_virtual_ip
 
-        # if ha_group is not None and vrid is not None:
-        #     module.fail_json(msg="Either ha_group or vrid can be set at a time.")
+        if slb_virtual_ip:
+                json_post['virtual_server']['address'] = slb_virtual_ip
 
         if ha_group is not None:
             for item in ha_group:
