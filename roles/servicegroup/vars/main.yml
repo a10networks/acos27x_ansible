@@ -3,13 +3,13 @@
 username: admin
 state: present
 partition: ""
-servicegroup_name: CSPOOL2
-method: round-robin
-health_monitor: hm_icmp
+servicegroup_name: CSPOOL3
+method: src-ip-only-hash
+health_monitor: hm_http
 
 # service group member variables
-real_server_name: webserver2
+real_server_name: webserver
 real_server_port: 80
 real_server_priority: 3
-real_server_status: enabled
+real_server_status: disabled
 real_server_state: present

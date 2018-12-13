@@ -193,8 +193,7 @@ def main():
             partition=dict(type='str', aliases=['partition','part']),
             service_group=dict(type='str', aliases=['service', 'pool', 'group'], required=True),
             service_group_protocol=dict(type='str', default='tcp', aliases=['proto', 'protocol'], choices=['tcp', 'udp']),
-            service_group_method=dict(type='str', default='round-robin',
-                                      aliases=['method'],
+            service_group_method=dict(type='str', aliases=['method'],
                                       choices=['round-robin',
                                                'weighted-rr',
                                                'least-connection',
@@ -277,10 +276,12 @@ def main():
     json_post = {
         'service_group': {
             'name': slb_service_group,
-            'protocol': protocol,
-            'lb_method': load_balancing_methods[slb_service_group_method],
+            'protocol': protocol
         }
     }
+
+    if slb_service_group_method is not None:
+        json_post['service_group']['lb_method'] = load_balancing_methods[slb_service_group_method]
 
     if slb_client_reset == True:
         json_post['client_reset'] = 1
@@ -325,7 +326,7 @@ def main():
                     json_post['service_group'].pop('member_list')
                 except KeyError, e:
                     pass
-                    
+
                 result = axapi_call(module, session_url + '&method=slb.service_group.update', json.dumps(json_post))
                 if axapi_failure(result):
                     module.fail_json(msg=result['response']['err']['msg'])
